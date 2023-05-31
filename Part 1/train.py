@@ -83,7 +83,6 @@ def main(config):
 
     # Initialize the model that we are going to use
     model = LSTM(config.input_length, config.input_dim, config.num_hidden, config.num_classes)
-    model.to(device)
 
     # Initialize the dataset and data loader
     dataset = PalindromeDataset(config.data_size, config.input_length)
@@ -99,7 +98,7 @@ def main(config):
     # Setup the loss and optimizer
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.RMSprop(model.parameters(), lr=config.learning_rate)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
+
 
     for epoch in range(config.max_epoch):
         # Train the model for one epoch
