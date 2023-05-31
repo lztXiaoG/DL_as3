@@ -26,4 +26,11 @@ class AverageMeter(object):
 
 @torch.no_grad()
 def accuracy(output, target):
+    # 将模型输出转换为预测的类别
+    _, predicted = torch.max(output, dim=1)
+    # 计算预测与目标值的匹配情况
+    correct = (predicted == target).sum().item()
+    # 计算准确率
+    acc = correct / target.size(0)
+    return acc
     # Implementation here ...
