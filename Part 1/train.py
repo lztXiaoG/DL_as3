@@ -25,7 +25,7 @@ def train(model, data_loader, optimizer, criterion, device, config):
         batch_inputs = batch_inputs.to(device)
         batch_targets = batch_targets.to(device)
 
-        optimizer.zero_grad()  # 梯度清零
+        model.zero_grad()
 
         # 前向传播
         outputs = model(batch_inputs)
@@ -69,14 +69,10 @@ def evaluate(model, data_loader, criterion, device, config):
         outputs = model(batch_inputs)
         loss = criterion(outputs, batch_targets)
 
-        # 计算准确率
-        _, predicted = torch.max(outputs, dim=1)
-        correct = (predicted == batch_targets).sum().item()
-        accuracy = correct / batch_inputs.size(0)
-
+        acc = accuracy(outputs, batch_targets)
         losses.update(loss.item(), batch_inputs.size(0))
-        accuracies.update(accuracy, batch_inputs.size(0))
-        ############
+        accuracies.update(acc, batch_inputs.size(0))
+
         if step % 10 == 0:
             print(f'[{step}/{len(data_loader)}]', losses, accuracies)
     return losses.avg, accuracies.avg
@@ -113,6 +109,7 @@ def main(config):
         # Evaluate the trained model on the validation set
         val_loss, val_acc = evaluate(
             model, val_dloader, criterion, device, config)
+        optimizer.step()
         scheduler.step()  # 更新学习率
         print(f"Epoch [{epoch + 1}/{config.max_epoch}]")
         print(f"Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f}")
