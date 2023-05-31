@@ -42,7 +42,8 @@ def train(model, data_loader, optimizer, criterion, device, config):
         # 更新统计指标
         acc = accuracy(outputs, batch_targets)
         losses.update(loss.item(), batch_inputs.size(0))
-        accuracies.update(acc.item(), batch_inputs.size(0))
+        accuracies.update(torch.tensor(acc), batch_inputs.size(0))
+
         ############
         # Add more code here ...
         if step % 10 == 0:
@@ -68,10 +69,13 @@ def evaluate(model, data_loader, criterion, device, config):
         outputs = model(batch_inputs)
         loss = criterion(outputs, batch_targets)
 
-        # 更新统计指标
-        acc = accuracy(outputs, batch_targets)
+        # 计算准确率
+        _, predicted = torch.max(outputs, dim=1)
+        correct = (predicted == batch_targets).sum().item()
+        accuracy = correct / batch_inputs.size(0)
+
         losses.update(loss.item(), batch_inputs.size(0))
-        accuracies.update(acc.item(), batch_inputs.size(0))
+        accuracies.update(accuracy, batch_inputs.size(0))
         ############
         if step % 10 == 0:
             print(f'[{step}/{len(data_loader)}]', losses, accuracies)
