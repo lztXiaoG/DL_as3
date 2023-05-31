@@ -82,21 +82,24 @@ def main(config):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     # Initialize the model that we are going to use
-    model = ...  # fixme
+    model = LSTM(config.input_length, config.input_dim, config.num_hidden, config.num_classes)
     model.to(device)
 
     # Initialize the dataset and data loader
-    dataset = ...  # fixme
+    dataset = PalindromeDataset(config.data_size, config.input_length)
     # Split dataset into train and validation sets
-    train_dataset, val_dataset = ...  # fixme
+    train_size = int(config.data_size * config.portion_train)
+    val_size = config.data_size - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
+
     # Create data loaders for training and validation
-    train_dloader = ...  # fixme
-    val_dloader = ...  # fixme
+    train_dloader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
+    val_dloader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False)
 
     # Setup the loss and optimizer
-    criterion = ...  # fixme
-    optimizer = ...  # fixme
-    scheduler = ...  # fixme
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.RMSprop(model.parameters(), lr=config.learning_rate)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
 
     for epoch in range(config.max_epoch):
         # Train the model for one epoch
@@ -106,6 +109,9 @@ def main(config):
         # Evaluate the trained model on the validation set
         val_loss, val_acc = evaluate(
             model, val_dloader, criterion, device, config)
+        print(f"Epoch [{epoch + 1}/{config.max_epoch}]")
+        print(f"Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f}")
+        print(f"Val Loss: {val_loss:.4f} | Val Accuracy: {val_acc:.4f}")
 
     print('Done training.')
 
