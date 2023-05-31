@@ -23,6 +23,9 @@ class PalindromeDataset(data.Dataset):
         self.half_length = math.ceil(self.seq_length/2)
         max_num = 10 ** self.half_length
         self.total_len = total_len
+        #####
+        # self.total_len = min(self.total_len, max_num)
+        #####
         if self.total_len > max_num:
             print("Warning: total_len is larger than the maximum possible length. ")
             print("Setting total_len to the maximum possible length. ")

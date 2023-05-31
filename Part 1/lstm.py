@@ -29,17 +29,17 @@ class LSTM(nn.Module):
         self.W_out = nn.Parameter(torch.Tensor(hidden_dim, output_dim))
         self.b_out = nn.Parameter(torch.Tensor(output_dim))
 
-        self.reset_parameters()
-
-        ############
-
-    def reset_parameters(self):
-        nn.init.kaiming_uniform_(self.W_ih, a=0.1)
-        nn.init.kaiming_uniform_(self.W_hh, a=0.1)
-        nn.init.constant_(self.b_ih, 0)
-        nn.init.constant_(self.b_hh, 0)
-        nn.init.kaiming_uniform_(self.W_out, a=0.1)
-        nn.init.constant_(self.b_out, 0)
+    #     self.reset_parameters()
+    #
+    #     ############
+    #
+    # def reset_parameters(self):
+    #     nn.init.kaiming_uniform_(self.W_ih, a=0.1)
+    #     nn.init.kaiming_uniform_(self.W_hh, a=0.1)
+    #     nn.init.constant_(self.b_ih, 0)
+    #     nn.init.constant_(self.b_hh, 0)
+    #     nn.init.kaiming_uniform_(self.W_out, a=0.1)
+    #     nn.init.constant_(self.b_out, 0)
 
     ############
     def forward(self, x):
