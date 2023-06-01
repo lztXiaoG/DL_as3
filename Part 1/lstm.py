@@ -19,27 +19,46 @@ class LSTM(nn.Module):
         self.hidden_dim = hidden_dim
         self.output_dim = output_dim
 
-        # LSTM parameters
-        self.W_ih = nn.Parameter(torch.Tensor(input_dim, hidden_dim * 4))
-        self.W_hh = nn.Parameter(torch.Tensor(hidden_dim, hidden_dim * 4))
-        self.b_ih = nn.Parameter(torch.Tensor(hidden_dim * 4))
-        self.b_hh = nn.Parameter(torch.Tensor(hidden_dim * 4))
+        self.W_gx = nn.Parameter(torch.Tensor(input_dim, hidden_dim))
+        self.W_gh = nn.Parameter(torch.Tensor(hidden_dim, hidden_dim))
+        self.b_g = nn.Parameter(torch.Tensor(hidden_dim))
 
-        # Output layer parameters
-        self.W_out = nn.Parameter(torch.Tensor(hidden_dim, output_dim))
-        self.b_out = nn.Parameter(torch.Tensor(output_dim))
+        self.W_ix = nn.Parameter(torch.Tensor(input_dim, hidden_dim))
+        self.W_ih = nn.Parameter(torch.Tensor(hidden_dim, hidden_dim))
+        self.b_i = nn.Parameter(torch.Tensor(hidden_dim))
 
-    #     self.reset_parameters()
-    #
-    #     ############
-    #
-    # def reset_parameters(self):
-    #     nn.init.kaiming_uniform_(self.W_ih, a=0.1)
-    #     nn.init.kaiming_uniform_(self.W_hh, a=0.1)
-    #     nn.init.constant_(self.b_ih, 0)
-    #     nn.init.constant_(self.b_hh, 0)
-    #     nn.init.kaiming_uniform_(self.W_out, a=0.1)
-    #     nn.init.constant_(self.b_out, 0)
+        self.W_fx = nn.Parameter(torch.Tensor(input_dim, hidden_dim))
+        self.W_fh = nn.Parameter(torch.Tensor(hidden_dim, hidden_dim))
+        self.b_f = nn.Parameter(torch.Tensor(hidden_dim))
+
+        self.W_ox = nn.Parameter(torch.Tensor(input_dim, hidden_dim))
+        self.W_oh = nn.Parameter(torch.Tensor(hidden_dim, hidden_dim))
+        self.b_o = nn.Parameter(torch.Tensor(hidden_dim))
+
+        self.W_ph = nn.Parameter(torch.Tensor(hidden_dim, output_dim))
+        self.b_p = nn.Parameter(torch.Tensor(output_dim))
+
+        self.init_weights()
+
+    def init_weights(self):
+        nn.init.kaiming_uniform_(self.W_gx, a=0.1)
+        nn.init.kaiming_uniform_(self.W_gh, a=0.1)
+        nn.init.constant_(self.b_g, 0)
+
+        nn.init.kaiming_uniform_(self.W_ix, a=0.1)
+        nn.init.kaiming_uniform_(self.W_ih, a=0.1)
+        nn.init.constant_(self.b_i, 0)
+
+        nn.init.kaiming_uniform_(self.W_fx, a=0.1)
+        nn.init.kaiming_uniform_(self.W_fh, a=0.1)
+        nn.init.constant_(self.b_f, 0)
+
+        nn.init.kaiming_uniform_(self.W_ox, a=0.1)
+        nn.init.kaiming_uniform_(self.W_oh, a=0.1)
+        nn.init.constant_(self.b_o, 0)
+
+        nn.init.kaiming_uniform_(self.W_ph, a=0.1)
+        nn.init.constant_(self.b_p, 0)
 
     ############
     def forward(self, x):
@@ -47,29 +66,24 @@ class LSTM(nn.Module):
         ############
         batch_size = x.size(0)
 
-        # Initialize hidden state and cell state
-        h_t = torch.zeros(batch_size, self.hidden_dim, dtype=x.dtype, device=x.device)
-        c_t = torch.zeros(batch_size, self.hidden_dim, dtype=x.dtype, device=x.device)
+        h_t = torch.zeros(batch_size, self.hidden_dim, dtype=torch.float32, device=x.device)
+        c_t = torch.zeros(batch_size, self.hidden_dim, dtype=torch.float32, device=x.device)
 
-        # Iterate over sequence steps
         for t in range(self.seq_length):
             x_t = x[:, t, :]
 
-            # LSTM recurrence equations
-            gates = torch.mm(x_t, self.W_ih) + torch.mm(h_t, self.W_hh) + self.b_ih + self.b_hh
-            i_t, f_t, g_t, o_t = gates.chunk(4, 1)
-            i_t = torch.sigmoid(i_t)
-            f_t = torch.sigmoid(f_t)
-            g_t = torch.tanh(g_t)
-            o_t = torch.sigmoid(o_t)
+            g_t = torch.tanh(torch.mm(x_t, self.W_gx) + torch.mm(h_t, self.W_gh) + self.b_g)
+            i_t = torch.sigmoid(torch.mm(x_t, self.W_ix) + torch.mm(h_t, self.W_ih) + self.b_i)
+            f_t = torch.sigmoid(torch.mm(x_t, self.W_fx) + torch.mm(h_t, self.W_fh) + self.b_f)
+            o_t = torch.sigmoid(torch.mm(x_t, self.W_ox) + torch.mm(h_t, self.W_oh) + self.b_o)
 
-            c_t = f_t * c_t + i_t * g_t
-            h_t = o_t * torch.tanh(c_t)
+            c_t = g_t * i_t + c_t * f_t
+            h_t = torch.tanh(c_t) * o_t
 
-        # Compute output
-        output = torch.mm(h_t, self.W_out) + self.b_out
+        p_t = torch.mm(h_t, self.W_ph) + self.b_p
+        y_t = nn.functional.softmax(p_t, dim=1)
 
-        return output
+        return y_t
 
     ############
     # add more methods here if needed

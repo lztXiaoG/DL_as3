@@ -6,7 +6,7 @@ import argparse
 
 import torch
 from torch.utils.data import DataLoader
-
+import torch.nn as nn
 from dataset import PalindromeDataset
 from lstm import LSTM
 from utils import AverageMeter, accuracy
@@ -19,24 +19,39 @@ def train(model, data_loader, optimizer, criterion, device, config):
     ############
     losses = AverageMeter("Loss")
     accuracies = AverageMeter("Accuracy")
+
     for step, (batch_inputs, batch_targets) in enumerate(data_loader):
         # Add more code here ...
         ############
+
         batch_inputs = batch_inputs.to(device)
         batch_targets = batch_targets.to(device)
+        batch_targets = batch_targets.long()
+
+
+
 
         model.zero_grad()
 
         # 前向传播
         outputs = model(batch_inputs)
+        # 获取最后一个时间步的预测值并应用 softmax
+        # y_t = outputs[:, -1]  # 获取最后一个时间步的预测值
+        # # 计算交叉熵损失
+        # loss = criterion(y_t, batch_targets)
         loss = criterion(outputs, batch_targets)
 
         # 反向传播
+
+
         loss.backward()
+
         ############
         # the following line is to deal with exploding gradients
+        optimizer.step()
         torch.nn.utils.clip_grad_norm_(
             model.parameters(), max_norm=config.max_norm)
+
 
         ############
         # 更新统计指标
@@ -109,7 +124,6 @@ def main(config):
         # Evaluate the trained model on the validation set
         val_loss, val_acc = evaluate(
             model, val_dloader, criterion, device, config)
-        optimizer.step()
         scheduler.step()  # 更新学习率
         print(f"Epoch [{epoch + 1}/{config.max_epoch}]")
         print(f"Train Loss: {train_loss:.4f} | Train Accuracy: {train_acc:.4f}")
