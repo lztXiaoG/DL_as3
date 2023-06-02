@@ -172,6 +172,7 @@ def main():
     torch.save(generator.state_dict(), "mnist_generator.pt")
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--n_epochs', type=int, default=200,
